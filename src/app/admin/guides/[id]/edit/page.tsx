@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import ReactMarkdown from 'react-markdown'
+import { BookOpen, Plus, Trash2, ChevronUp, ChevronDown, Save, X } from 'lucide-react'
 
 interface Step {
   id: string
@@ -23,21 +24,22 @@ export default function EditGuidePage({ params }: { params: { id: string } }) {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    // Fetch guide data
-    fetch(`/api/guides/${params.id}`)
-      .then((res) => res.json())
-      .then((data) => {
-        setTitle(data.title)
-        setSummary(data.summary)
-        setCategoryId(data.categoryId)
-        setPublished(data.published)
-        setSteps(data.steps || [])
-      })
-
-    // Fetch categories
-    fetch('/api/categories')
-      .then((res) => res.json())
-      .then((data) => setCategories(data))
+    const fetchData = async () => {
+      const [guideRes, catsRes] = await Promise.all([
+        fetch(`/api/guides/${params.id}`),
+        fetch('/api/categories'),
+      ])
+      const guide = await guideRes.json()
+      const cats = await catsRes.json()
+      
+      setTitle(guide.title)
+      setSummary(guide.summary)
+      setCategoryId(guide.categoryId)
+      setPublished(guide.published)
+      setSteps(guide.steps || [])
+      setCategories(cats)
+    }
+    fetchData()
   }, [params.id])
 
   const addStep = () => {
@@ -76,7 +78,6 @@ export default function EditGuidePage({ params }: { params: { id: string } }) {
     setError('')
     setLoading(true)
 
-    // Validation
     if (!title || !summary || !categoryId) {
       setError('Please fill in all required fields')
       setLoading(false)
@@ -116,134 +117,150 @@ export default function EditGuidePage({ params }: { params: { id: string } }) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white border-b border-gray-200">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
+            <div className="flex items-center gap-2">
+              <BookOpen className="h-8 w-8 text-blue-600" />
+              <h1 className="text-xl font-bold text-gray-900">Admin Dashboard</h1>
+            </div>
             <a
               href="/admin"
-              className="text-gray-600 hover:text-gray-900"
+              className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
             >
-              ← Back to Dashboard
+              <X className="h-4 w-4" />
+              Cancel
             </a>
-            <h1 className="text-xl font-semibold text-gray-900">
-              Edit Guide
-            </h1>
           </div>
         </div>
-      </nav>
+      </header>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-8">
+          <h2 className="text-3xl font-bold text-gray-900">Edit Guide</h2>
+          <p className="text-gray-600 mt-2">Update the guide details and steps below.</p>
+        </div>
+
         {error && (
-          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
-              Title *
-            </label>
-            <input
-              id="title"
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
+          {/* Basic Info */}
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h3>
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
+                  Title *
+                </label>
+                <input
+                  id="title"
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  required
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="summary" className="block text-sm font-medium text-gray-700 mb-2">
+                  Summary *
+                </label>
+                <textarea
+                  id="summary"
+                  value={summary}
+                  onChange={(e) => setSummary(e.target.value)}
+                  required
+                  rows={3}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
+                  Category *
+                </label>
+                <select
+                  id="category"
+                  value={categoryId}
+                  onChange={(e) => setCategoryId(e.target.value)}
+                  required
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white"
+                >
+                  <option value="">Select a category</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex items-center">
+                <input
+                  id="published"
+                  type="checkbox"
+                  checked={published}
+                  onChange={(e) => setPublished(e.target.checked)}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label htmlFor="published" className="ml-2 block text-sm text-gray-900">
+                  Published
+                </label>
+              </div>
+            </div>
           </div>
 
-          <div>
-            <label htmlFor="summary" className="block text-sm font-medium text-gray-700 mb-1">
-              Summary *
-            </label>
-            <textarea
-              id="summary"
-              value={summary}
-              onChange={(e) => setSummary(e.target.value)}
-              required
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
-              Category *
-            </label>
-            <select
-              id="category"
-              value={categoryId}
-              onChange={(e) => setCategoryId(e.target.value)}
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
-            >
-              <option value="">Select a category</option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex items-center">
-            <input
-              id="published"
-              type="checkbox"
-              checked={published}
-              onChange={(e) => setPublished(e.target.checked)}
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-            />
-            <label htmlFor="published" className="ml-2 block text-sm text-gray-900">
-              Published
-            </label>
-          </div>
-
-          <div>
+          {/* Steps */}
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Steps</h2>
+              <h3 className="text-lg font-semibold text-gray-900">Steps</h3>
               <button
                 type="button"
                 onClick={addStep}
-                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 font-medium transition-colors"
               >
+                <Plus className="h-4 w-4" />
                 Add Step
               </button>
             </div>
 
             <div className="space-y-4">
               {steps.map((step, index) => (
-                <div key={step.id} className="bg-white p-4 rounded-lg border border-gray-200">
+                <div key={step.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                   <div className="flex justify-between items-center mb-3">
-                    <h3 className="text-md font-medium text-gray-900">
+                    <h4 className="text-md font-medium text-gray-900">
                       Step {index + 1}
-                    </h3>
-                    <div className="flex gap-2">
+                    </h4>
+                    <div className="flex gap-1">
                       <button
                         type="button"
                         onClick={() => moveStep(index, 'up')}
                         disabled={index === 0}
-                        className="p-1 text-gray-500 hover:text-gray-700 disabled:opacity-50"
+                        className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       >
-                        ↑
+                        <ChevronUp className="h-4 w-4" />
                       </button>
                       <button
                         type="button"
                         onClick={() => moveStep(index, 'down')}
                         disabled={index === steps.length - 1}
-                        className="p-1 text-gray-500 hover:text-gray-700 disabled:opacity-50"
+                        className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       >
-                        ↓
+                        <ChevronDown className="h-4 w-4" />
                       </button>
                       <button
                         type="button"
                         onClick={() => removeStep(step.id)}
                         disabled={steps.length === 1}
-                        className="p-1 text-red-500 hover:text-red-700 disabled:opacity-50"
+                        className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       >
-                        Remove
+                        <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
                   </div>
@@ -255,11 +272,11 @@ export default function EditGuidePage({ params }: { params: { id: string } }) {
                       onChange={(e) => updateStep(step.id, 'title', e.target.value)}
                       placeholder="Step title"
                       required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     />
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
                           Body (Markdown)
                         </label>
                         <textarea
@@ -268,14 +285,14 @@ export default function EditGuidePage({ params }: { params: { id: string } }) {
                           placeholder="Step instructions in markdown..."
                           required
                           rows={6}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm"
+                          className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-mono text-sm"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
                           Preview
                         </label>
-                        <div className="w-full h-48 px-3 py-2 border border-gray-300 rounded-md bg-gray-50 overflow-auto">
+                        <div className="w-full h-48 px-4 py-2 border border-gray-200 rounded-lg bg-white overflow-auto">
                           <div className="prose prose-sm max-w-none">
                             <ReactMarkdown>
                               {step.body || '*Preview will appear here*'}
@@ -290,19 +307,22 @@ export default function EditGuidePage({ params }: { params: { id: string } }) {
             </div>
           </div>
 
+          {/* Actions */}
           <div className="flex gap-4">
             <button
               type="submit"
               disabled={loading}
-              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-all"
             >
+              <Save className="h-4 w-4" />
               {loading ? 'Saving...' : 'Save Changes'}
             </button>
             <button
               type="button"
               onClick={() => router.push('/admin')}
-              className="px-6 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+              className="flex items-center gap-2 px-6 py-3 bg-white text-gray-700 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 font-medium transition-all border border-gray-200"
             >
+              <X className="h-4 w-4" />
               Cancel
             </button>
           </div>
