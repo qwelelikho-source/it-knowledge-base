@@ -1,37 +1,29 @@
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAdminSession } from '@/lib/session'
 import { NextResponse } from 'next/server'
 
 export async function GET() {
-  const session = await getServerSession(authOptions)
-
-  if (!session || session.user.role !== 'ADMIN') {
+  if (!(await getAdminSession())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const guides = await prisma.guide.findMany({
-    include: {
-      category: true,
-    },
-    orderBy: { updatedAt: 'desc' },
-  })
+  const [guides, counts] = await Promise.all([
+    prisma.guide.findMany({
+      include: { category: true },
+      orderBy: { updatedAt: 'desc' },
+    }),
+    prisma.feedback.groupBy({
+      by: ['guideId', 'helpful'],
+      _count: { _all: true },
+    }),
+  ])
 
-  const helpfulCounts = await Promise.all(
-    guides.map(async (guide) => {
-      const helpful = await prisma.feedback.count({
-        where: { guideId: guide.id, helpful: true },
-      })
-      const notHelpful = await prisma.feedback.count({
-        where: { guideId: guide.id, helpful: false },
-      })
-      return { guideId: guide.id, helpful, notHelpful }
-    })
-  )
-
-  const feedbackMap = Object.fromEntries(
-    helpfulCounts.map((fc) => [fc.guideId, fc])
-  )
+  const feedbackMap: Record<string, { helpful: number; notHelpful: number }> = {}
+  for (const row of counts) {
+    const entry = (feedbackMap[row.guideId] ??= { helpful: 0, notHelpful: 0 })
+    if (row.helpful) entry.helpful = row._count._all
+    else entry.notHelpful = row._count._all
+  }
 
   return NextResponse.json({ guides, feedbackMap })
 }

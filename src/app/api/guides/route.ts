@@ -1,58 +1,58 @@
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAdminSession } from '@/lib/session'
+import { uniqueGuideSlug } from '@/lib/slug'
+import { prismaCode } from '@/lib/prisma-errors'
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
 const createGuideSchema = z.object({
-  title: z.string().min(1),
-  summary: z.string().min(1),
-  categoryId: z.string().min(1),
+  title: z.string().trim().min(1, 'Title is required'),
+  summary: z.string().trim().min(1, 'Summary is required'),
+  categoryId: z.string().min(1, 'Choose a category'),
   published: z.boolean(),
-  steps: z.array(
-    z.object({
-      title: z.string().min(1),
-      body: z.string().min(1),
-      order: z.number(),
-    })
-  ),
+  steps: z
+    .array(
+      z.object({
+        title: z.string().trim().min(1, 'Every step needs a title'),
+        body: z.string().trim().min(1, 'Every step needs instructions'),
+        order: z.number(),
+      })
+    )
+    .min(1, 'Add at least one step'),
 })
 
 export async function POST(request: Request) {
-  const session = await getServerSession(authOptions)
-
-  if (!session || session.user.role !== 'ADMIN') {
+  if (!(await getAdminSession())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   try {
-    const body = await request.json()
-    const validatedData = createGuideSchema.parse(body)
-
-    // Generate slug from title
-    const slug = validatedData.title
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '')
+    const data = createGuideSchema.parse(await request.json())
+    const slug = await uniqueGuideSlug(data.title)
 
     const guide = await prisma.guide.create({
       data: {
-        title: validatedData.title,
+        title: data.title,
         slug,
-        summary: validatedData.summary,
-        categoryId: validatedData.categoryId,
-        published: validatedData.published,
-        steps: {
-          create: validatedData.steps,
-        },
+        summary: data.summary,
+        categoryId: data.categoryId,
+        published: data.published,
+        steps: { create: data.steps },
       },
     })
 
-    return NextResponse.json(guide)
+    return NextResponse.json(guide, { status: 201 })
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Invalid data', details: error.issues }, { status: 400 })
+      return NextResponse.json(
+        { error: error.issues[0]?.message ?? 'Invalid data', details: error.issues },
+        { status: 400 }
+      )
     }
+    if (prismaCode(error) === 'P2003') {
+      return NextResponse.json({ error: 'That category no longer exists' }, { status: 400 })
+    }
+    console.error('Create guide failed:', error)
     return NextResponse.json({ error: 'Failed to create guide' }, { status: 500 })
   }
 }

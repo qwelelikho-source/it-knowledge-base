@@ -1,14 +1,9 @@
 'use client'
 
 import { Toaster as Sonner } from 'sonner'
+import { useTheme } from '@/components/theme-provider'
 
 export function Toaster() {
-  return (
-    <Sonner
-      position="top-right"
-      expand={false}
-      richColors
-      closeButton
-    />
-  )
+  const { resolvedTheme } = useTheme()
+  return <Sonner theme={resolvedTheme} position="bottom-right" closeButton richColors />
 }

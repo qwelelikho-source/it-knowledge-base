@@ -1,14 +1,14 @@
 # IT Knowledge Base
 
-A searchable library of IT troubleshooting guides built with Next.js 14, Prisma, and Tailwind CSS.
+A searchable library of IT troubleshooting guides built with Next.js 16, Prisma, shadcn/ui and Tailwind CSS.
 
 ## Features
 
 ### Public Features
-- **Home Page**: Search bar, category list, and recently updated guides
-- **Search**: Keyword search across title, summary, and step content with category filtering
-- **Guide Pages**: Detailed step-by-step instructions with markdown rendering
-- **Feedback Widget**: "Was this helpful?" voting system (one vote per guide per browser)
+- **Home Page**: Search hero (Cmd/Ctrl+K), category cards with guide counts, and recently updated guides
+- **Search**: Keyword search across title, summary and step content with highlighted matches, ranking and category chips. "wifi" finds "Wi-Fi"; every word typed must match
+- **Guide Pages**: Numbered step-by-step layout, markdown with copy-able code blocks, sticky "On this page" list
+- **Feedback Widget**: "Did this fix your problem?" voting (one vote per guide per browser)
 
 ### Admin Features
 - **Authentication**: Secure admin login with email/password
@@ -19,12 +19,11 @@ A searchable library of IT troubleshooting guides built with Next.js 14, Prisma,
 
 ## Tech Stack
 
-- **Framework**: Next.js 14+ (App Router, TypeScript)
-- **Styling**: Tailwind CSS
+- **Framework**: Next.js 16 (App Router, TypeScript)
+- **Styling**: Tailwind CSS 3 + shadcn/ui, Geist font, light/dark theme
 - **Database**: Prisma ORM with SQLite (portable to PostgreSQL)
 - **Authentication**: Auth.js (NextAuth) with Credentials provider
 - **Validation**: Zod
-- **Forms**: React Hook Form
 - **Markdown**: react-markdown
 - **Testing**: Playwright
 
@@ -55,7 +54,7 @@ A searchable library of IT troubleshooting guides built with Next.js 14, Prisma,
    npx prisma migrate dev
    ```
 
-4. **Seed the database**:
+4. **Seed the database** (safe to re-run; existing guides are not touched):
    ```bash
    npm run seed
    ```
@@ -106,7 +105,7 @@ A searchable library of IT troubleshooting guides built with Next.js 14, Prisma,
 ## Security Features
 
 - Server-side validation on all mutations
-- Middleware protection for admin routes
+- `src/proxy.ts` (Next 16's replacement for middleware) guards admin pages; every mutating API route also checks the session itself
 - Draft guides hidden from public pages and search
 - Password hashing with bcrypt
 - Session-based authentication
@@ -143,3 +142,14 @@ Tests cover:
 ## License
 
 MIT
+
+## Notes
+
+- **Change the defaults before deploying.** `NEXTAUTH_SECRET` in `.env.example` is a placeholder
+  (generate one with `openssl rand -base64 32`), and the seeded admin password is `admin123`.
+- **Search** runs in JavaScript over published guides (`src/lib/search.ts`), which is plenty for hundreds
+  of guides and behaves identically on SQLite and PostgreSQL. For thousands, switch to database full-text search.
+- **Feedback** is limited to one vote per guide per browser using local storage. It is not tamper-proof; add rate
+  limiting on `/api/feedback` if the site is public.
+- **Theme** is handled by a small provider in `src/components/theme-provider.tsx` (no `next-themes`), which avoids
+  the React 19 "script tag" warning.

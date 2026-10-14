@@ -143,23 +143,19 @@ async function main() {
 
   for (const guideData of guides) {
     const { steps, ...guideInfo } = guideData
-    const guide = await prisma.guide.upsert({
-      where: { slug: guideData.slug },
-      update: {},
-      create: guideInfo,
-    })
-    console.log('Created guide:', guide.title)
 
-    // Create steps
-    for (const stepData of steps) {
-      await prisma.step.create({
-        data: {
-          ...stepData,
-          guideId: guide.id,
-        },
-      })
+    // Safe to re-run: guides that already exist are left alone, so their
+    // steps are never duplicated and your edits are never overwritten.
+    const existing = await prisma.guide.findUnique({ where: { slug: guideData.slug } })
+    if (existing) {
+      console.log('Skipped (already exists):', existing.title)
+      continue
     }
-    console.log(`  Created ${steps.length} steps for ${guide.title}`)
+
+    const guide = await prisma.guide.create({
+      data: { ...guideInfo, steps: { create: steps } },
+    })
+    console.log(`Created guide: ${guide.title} (${steps.length} steps)`)
   }
 
   console.log('Seed completed successfully!')

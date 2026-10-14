@@ -9,21 +9,24 @@ const feedbackSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json()
-    const validatedData = feedbackSchema.parse(body)
+    const { guideId, helpful } = feedbackSchema.parse(await request.json())
 
-    const feedback = await prisma.feedback.create({
-      data: {
-        guideId: validatedData.guideId,
-        helpful: validatedData.helpful,
-      },
+    // Only published guides can receive feedback.
+    const guide = await prisma.guide.findFirst({
+      where: { id: guideId, published: true },
+      select: { id: true },
     })
+    if (!guide) {
+      return NextResponse.json({ error: 'Guide not found' }, { status: 404 })
+    }
 
-    return NextResponse.json(feedback)
+    await prisma.feedback.create({ data: { guideId, helpful } })
+    return NextResponse.json({ success: true }, { status: 201 })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: 'Invalid data', details: error.issues }, { status: 400 })
     }
+    console.error('Submit feedback failed:', error)
     return NextResponse.json({ error: 'Failed to submit feedback' }, { status: 500 })
   }
 }

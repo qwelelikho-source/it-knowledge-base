@@ -1,101 +1,153 @@
 'use client'
 
 import Link from 'next/link'
-import { BookOpen, Moon, Sun, Menu, X } from 'lucide-react'
+import { usePathname, useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { Menu, Monitor, Moon, Search, Sun } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
-import { useTheme } from 'next-themes'
-import { useState } from 'react'
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet'
+import { Logo } from '@/components/logo'
+import { ThemeToggle } from '@/components/theme-toggle'
+import { useTheme, type Theme } from '@/components/theme-provider'
+import { cn } from '@/lib/utils'
+
+const NAV = [
+  { href: '/', label: 'Home' },
+  { href: '/search', label: 'All guides' },
+]
+
+const THEMES: { value: Theme; label: string; icon: typeof Sun }[] = [
+  { value: 'light', label: 'Light', icon: Sun },
+  { value: 'dark', label: 'Dark', icon: Moon },
+  { value: 'system', label: 'System', icon: Monitor },
+]
 
 export function Header() {
+  const pathname = usePathname()
+  const router = useRouter()
   const { theme, setTheme } = useTheme()
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [open, setOpen] = useState(false)
+  const [shortcut, setShortcut] = useState('Ctrl K')
 
-  const navItems = [
-    { href: '/', label: 'Home' },
-    { href: '/search', label: 'Search' },
-  ]
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (/mac|iphone|ipad/i.test(navigator.platform)) setShortcut('⌘K')
+  }, [])
+
+  // Cmd/Ctrl+K focuses the page's search box, or opens the search page.
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        const input = document.getElementById('kb-search') as HTMLInputElement | null
+        if (input) {
+          input.focus()
+          input.select()
+        } else {
+          router.push('/search')
+        }
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [router])
+
+  const isActive = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href))
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center">
-        <div className="flex items-center gap-2">
-          <Link href="/" className="flex items-center gap-2">
-            <BookOpen className="h-6 w-6 text-primary" />
-            <span className="font-bold text-xl">IT Knowledge Base</span>
-          </Link>
-        </div>
+    <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/70">
+      <div className="mx-auto flex h-16 w-full max-w-6xl items-center gap-6 px-4 sm:px-6">
+        <Logo />
 
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-6 ml-8">
-          {navItems.map((item) => (
+        <nav aria-label="Main" className="hidden items-center gap-1 md:flex">
+          {NAV.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              aria-current={isActive(item.href) ? 'page' : undefined}
+              className={cn(
+                'rounded-md px-3 py-1.5 text-sm font-medium transition-colors hover:text-foreground',
+                isActive(item.href) ? 'bg-secondary text-foreground' : 'text-muted-foreground'
+              )}
             >
               {item.label}
             </Link>
           ))}
         </nav>
 
-        <div className="flex items-center gap-2 ml-auto">
+        <div className="ml-auto flex items-center gap-2">
           <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className="hidden md:flex"
+            variant="outline"
+            size="sm"
+            className="hidden h-9 w-56 justify-start gap-2 font-normal text-muted-foreground shadow-soft lg:flex"
+            asChild
           >
-            <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-            <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-            <span className="sr-only">Toggle theme</span>
+            <Link href="/search">
+              <Search className="h-4 w-4" />
+              <span>Search guides</span>
+              <kbd className="ml-auto rounded border bg-muted px-1.5 py-0.5 font-mono text-[11px]">
+                {shortcut}
+              </kbd>
+            </Link>
           </Button>
 
-          <Link href="/admin/login">
-            <Button variant="ghost" size="sm" className="hidden md:flex">
-              Admin
+          <div className="hidden md:flex md:items-center md:gap-1">
+            <ThemeToggle />
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/admin">Admin</Link>
             </Button>
-          </Link>
+          </div>
 
-          {/* Mobile Menu */}
-          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-            <SheetTrigger asChild className="md:hidden">
-              <Button variant="ghost" size="icon">
+          <Sheet open={open} onOpenChange={setOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="md:hidden" aria-label="Open menu">
                 <Menu className="h-5 w-5" />
-                <span className="sr-only">Toggle menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[300px] sm:w-[400px]">
-              <nav className="flex flex-col gap-4 mt-8">
-                {navItems.map((item) => (
+            <SheetContent side="right" className="w-[300px]">
+              <SheetHeader className="text-left">
+                <SheetTitle>Menu</SheetTitle>
+                <SheetDescription className="sr-only">Site navigation and theme</SheetDescription>
+              </SheetHeader>
+              <nav aria-label="Mobile" className="mt-6 flex flex-col gap-1">
+                {[...NAV, { href: '/admin', label: 'Admin' }].map((item) => (
                   <Link
                     key={item.href}
                     href={item.href}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="text-lg font-medium text-muted-foreground hover:text-foreground transition-colors"
+                    onClick={() => setOpen(false)}
+                    className={cn(
+                      'rounded-md px-3 py-2.5 text-base font-medium transition-colors hover:bg-secondary',
+                      isActive(item.href) ? 'bg-secondary text-foreground' : 'text-muted-foreground'
+                    )}
                   >
                     {item.label}
                   </Link>
                 ))}
-                <div className="flex items-center justify-between pt-4 border-t">
-                  <span className="text-sm font-medium">Theme</span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                  >
-                    <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                    <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-                  </Button>
-                </div>
-                <Link
-                  href="/admin/login"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-2 text-lg font-medium text-muted-foreground hover:text-foreground transition-colors pt-4 border-t"
-                >
-                  Admin
-                </Link>
               </nav>
+              <div className="mt-6 border-t pt-4">
+                <p className="mb-2 px-3 text-sm font-medium text-muted-foreground">Theme</p>
+                <div className="flex gap-2 px-1">
+                  {THEMES.map(({ value, label, icon: Icon }) => (
+                    <Button
+                      key={value}
+                      variant={theme === value ? 'secondary' : 'ghost'}
+                      size="sm"
+                      onClick={() => setTheme(value)}
+                      className="flex-1 gap-1.5"
+                    >
+                      <Icon className="h-4 w-4" />
+                      {label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
             </SheetContent>
           </Sheet>
         </div>
