@@ -139,6 +139,37 @@ async function main() {
         { order: 5, title: 'Disable add-ins', body: 'Open Outlook in safe mode (hold Ctrl while clicking the Outlook icon). If it works in safe mode, disable add-ins one by one to find the culprit.' },
       ],
     },
+    {
+      title: 'Reset a Password in Microsoft 365 (Office.com)',
+      slug: 'reset-password-microsoft-365',
+      summary: 'For IT staff: reset a user\'s Office 365 / Microsoft 365 password from the admin center.',
+      categoryId: categories[2].id,
+      published: true,
+      steps: [
+        { order: 1, title: 'Confirm who is asking', body: "Verify the person's identity using your normal process (call-back, manager approval or ID check) before you reset anything." },
+        { order: 2, title: 'Open the admin center', body: "Go to **admin.microsoft.com** and sign in with your admin account. You need the Password administrator or Global administrator role. If you cannot see the user list, you do not have the right role." },
+        { order: 3, title: 'Find the user', body: "In the left menu go to **Users > Active users**, then select the person who needs the reset." },
+        { order: 4, title: 'Reset the password', body: "Click **Reset password**. Choose to auto-generate a password or create one yourself, and tick the option that makes the user **change their password at first sign-in**. Then click **Reset password** to confirm." },
+        { order: 5, title: 'Give the temporary password securely', body: "Microsoft no longer emails passwords from the admin center, so pass it on by phone or another secure channel. Never post it in a chat group or a ticket that others can read." },
+        { order: 6, title: 'Tell the user what happens next', body: "Ask them to sign in at **office.com** with the temporary password. They will be prompted to choose a new one straight away." },
+      ],
+    },
+    {
+      title: 'Reset a Password in Google Workspace (GSuite / Gmail)',
+      slug: 'reset-password-google-workspace',
+      summary: 'For IT staff: reset a user\'s Google Workspace (GSuite) password from the Google Admin console.',
+      categoryId: categories[2].id,
+      published: true,
+      steps: [
+        { order: 1, title: 'Confirm who is asking', body: "Verify the person's identity using your normal process (call-back, manager approval or ID check) before you reset anything." },
+        { order: 2, title: 'Open the Admin console', body: "Go to **admin.google.com** and sign in with an admin account that has reset-password privileges." },
+        { order: 3, title: 'Find the user', body: "Open the main menu, go to **Directory > Users**, point to the person and click **Reset password**. You can also search for them and open their profile first." },
+        { order: 4, title: 'Reset the password', body: "Choose **Automatically generate a password** or **Create password**. Tick **Ask for a password change at the next sign-in**, then click **Reset**." },
+        { order: 5, title: 'Reset their sign-in cookies', body: "Open the user's profile, go to **Security**, and reset their sign-in cookies. This signs them out of every active session, which matters most if the account may have been compromised." },
+        { order: 6, title: 'Send the user their new password', body: "Google does not send it for you unless you use Email Password. Pass it on by phone or another secure channel." },
+        { order: 7, title: 'Check app passwords', body: "A reset revokes the user's app-specific passwords. If they use older mail apps or devices, they may need to create new ones." },
+      ],
+    },
   ]
 
   for (const guideData of guides) {
