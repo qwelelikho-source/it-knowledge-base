@@ -170,6 +170,40 @@ async function main() {
         { order: 7, title: 'Check app passwords', body: "A reset revokes the user's app-specific passwords. If they use older mail apps or devices, they may need to create new ones." },
       ],
     },
+    {
+      title: 'Scan to Email Not Working',
+      slug: 'scan-to-email-not-working',
+      summary: "Fix a printer or scanner that will not email scans. Covers Microsoft 365 (Office 365) and Google Workspace (GSuite) settings.",
+      categoryId: categories[1].id,
+      published: true,
+      steps: [
+        { order: 1, title: 'Read the error and narrow it down', body: "Check the device's screen or job log for an error message or code and write it down. Then find out whether it fails for everyone or one person, and whether other scan options (scan to folder, copy) still work. If only scan to email fails, the problem is almost always the email settings, not the scanner hardware." },
+        { order: 2, title: 'Check the basics', body: "Make sure the device is online and can reach the network. Check that its **date and time** are correct, because a wrong clock makes secure email connections fail. Confirm the recipient address is typed correctly, and ask the recipient to check their junk folder." },
+        { order: 3, title: 'Check the size of the scan', body: "Very large scans (many pages, colour, high resolution) can be rejected for being too big to email. Try a single page in black and white at a lower resolution. If that works, reduce the quality or scan to a folder or shared drive instead." },
+        { order: 4, title: 'Check whether the saved password is still valid', body: "Scan to email often uses one mailbox's username and password stored on the device. If that password was reset or expired, or the account was locked, every scan will fail. Open the device's email (SMTP) settings and re-enter the current credentials." },
+        { order: 5, title: 'Microsoft 365: check the sign-in method', body: "Microsoft is switching off basic username-and-password SMTP sign-in for existing tenants, scheduled for the end of December 2026. Devices still using it will fail with an error like: 550 5.7.30 Basic authentication is not supported for Client Submission.\n\nIn the Exchange admin center, run the **SMTP AUTH clients report** to see which devices still use basic authentication. Then move the device to a supported method: OAuth if the device supports it, or an SMTP relay setup for older devices. Check Microsoft's current announcement for the latest dates." },
+        { order: 6, title: 'Google Workspace: use the SMTP relay', body: "Google recommends the **SMTP relay service** for printers and scanners. Set the device to use **smtp-relay.gmail.com** on port 25, 465 or 587.\n\nIn the Admin console, go to **Apps > Google Workspace > Gmail > Routing** and check the **SMTP relay service** setting. If it only allows certain IP addresses, make sure your office's public IP address is on the list. A changed IP address after an ISP or router change is a common reason scanning suddenly stops." },
+        { order: 7, title: 'Check the port and the firewall', body: "Port 25 is often blocked by firewalls and internet providers. Try port **587** or **465** instead and match the encryption setting (STARTTLS for 587, SSL/TLS for 465). Ask whoever manages the firewall to allow the device through if it is still blocked." },
+        { order: 8, title: 'Restart and test again', body: "Restart the device, send a test scan to your own address, and check the message arrives. If it still fails, collect the device model, the exact error message, the time of the failed scan and the settings used (server, port, encryption, sender address) before you escalate." },
+      ],
+    },
+    {
+      title: 'Printer Scan Not Working (Scan to Folder or Computer)',
+      slug: 'printer-scan-not-working',
+      summary: "Fix scan to printer problems: scans that do not reach your computer or a shared folder, or a scanner that is not detected.",
+      categoryId: categories[1].id,
+      published: true,
+      steps: [
+        { order: 1, title: 'Check the printer and the paper path', body: "Look at the printer's screen for an error. Make sure the document feeder is not jammed and the scanner lid is closed. Try a **copy**: if copying works, the scanner hardware is fine and the problem is the connection or the scan destination." },
+        { order: 2, title: 'Check the network connection', body: "The printer and your computer must be on the same network. Print a **network configuration page** from the printer to see its IP address, then open Command Prompt and run **ping** followed by that address. If there is no reply, reconnect the printer to the network." },
+        { order: 3, title: 'Check whether the printer address changed', body: "If the printer gets its address automatically, a new address breaks any saved scan destination. Ask IT to give the printer a **fixed IP address** (a DHCP reservation) so it stops changing." },
+        { order: 4, title: 'Scan to folder: check the shared folder', body: "Open the destination folder's sharing settings and check the account the printer uses has permission to write to it. Use the computer's **IP address** in the folder path instead of its name. If that account's password was reset or expired, update it in the printer's scan-to-folder settings." },
+        { order: 5, title: 'Scan to folder: check the file sharing version', body: "Newer versions of Windows have the old SMB1 file sharing protocol turned off. Older printers that only support it can no longer connect. Look in the printer's scan settings for an option to use **SMB 2 or 3**, or update the printer's firmware." },
+        { order: 6, title: 'Scan to computer: re-add the scanner', body: "On the computer, open **Settings > Bluetooth & devices > Printers & scanners**, remove the printer and add it again. Then reinstall the manufacturer's scanning software or driver and restart the computer." },
+        { order: 7, title: 'Check the firewall and security software', body: "A firewall or antivirus program can block scan traffic between the printer and the computer. Temporarily allow the manufacturer's scanning software through the firewall and try again. If it works, ask IT to add a permanent exception." },
+        { order: 8, title: 'Restart everything and update firmware', body: "Turn the printer off and on, restart the computer, and try a scan again. Check the manufacturer's website for a firmware update for your printer model. If it still fails, note the printer model, the error message and which scan option fails (folder or computer) when you escalate." },
+      ],
+    },
   ]
 
   for (const guideData of guides) {
