@@ -8,6 +8,7 @@ A searchable library of IT troubleshooting guides built with Next.js 16, Prisma,
 - **Home Page**: Search hero (Cmd/Ctrl+K), category cards with guide counts, and recently updated guides
 - **Search**: Keyword search across title, summary and step content with highlighted matches, ranking and category chips. "wifi" finds "Wi-Fi"; every word typed must match
 - **Guide Pages**: Numbered step-by-step layout, markdown with copy-able code blocks, sticky "On this page" list
+- **AI Assistant**: A floating "Ask AI" chat on the public site. It answers questions using your published guides, streams its reply and links to the guides it used. Needs `ANTHROPIC_API_KEY` in `.env`
 - **Feedback Widget**: "Did this fix your problem?" voting (one vote per guide per browser)
 
 ### Admin Features
@@ -153,3 +154,7 @@ MIT
   limiting on `/api/feedback` if the site is public.
 - **Theme** is handled by a small provider in `src/components/theme-provider.tsx` (no `next-themes`), which avoids
   the React 19 "script tag" warning.
+- **AI assistant** (`src/app/api/chat/route.ts`): the server finds the guides most relevant to the question, gives
+  them to Claude as reference material, and streams the answer back. Set `ANTHROPIC_API_KEY` (and optionally
+  `ANTHROPIC_MODEL`) in `.env`, then restart. Without a key the chat shows a "not set up yet" message. Each visitor is
+  limited to 8 messages a minute and 60 an hour (in memory, per server instance).

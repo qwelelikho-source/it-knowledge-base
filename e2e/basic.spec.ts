@@ -83,3 +83,19 @@ test('admin can sign in and sees the guides dashboard', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Guides' })).toBeVisible()
   await expect(page.getByRole('link', { name: 'New guide' })).toBeVisible()
 })
+
+test('AI assistant opens, offers suggestions and closes with Escape', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Open IT assistant' }).click()
+  const dialog = page.getByRole('dialog', { name: 'IT assistant' })
+  await expect(dialog).toBeVisible()
+  await expect(dialog.getByRole('button', { name: "I can't connect to Wi-Fi" })).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(dialog).toBeHidden()
+})
+
+test('AI assistant API validates its input', async ({ request }) => {
+  const res = await request.post('/api/chat', { data: { messages: [] } })
+  // 400 when a key is configured, 503 when it is not. Never a 500.
+  expect([400, 503]).toContain(res.status())
+})
