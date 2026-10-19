@@ -126,6 +126,22 @@ async function main() {
       ],
     },
     {
+      title: 'Reset a Mail Password from the Admin Console',
+      slug: 'reset-mail-password-admin-console',
+      summary: 'Reset a user\'s email password as an administrator, using the Microsoft 365 (Office.com) admin center or the Google Workspace (formerly G Suite / GSuite) Admin console.',
+      categoryId: categories[2].id,
+      published: true,
+      steps: [
+        { order: 1, title: 'Confirm you have admin access', body: 'You need an administrator role to reset someone else\'s mail password. In Microsoft 365 that is a Password, Helpdesk, User or Global administrator. In Google Workspace it is a super admin or a role that can manage users. If you cannot see the options below, ask your IT administrator for access.' },
+        { order: 2, title: 'Verify who is asking', body: 'Before you reset anything, confirm the request really comes from the account owner, for example by phone or through their manager, following your organisation\'s policy.' },
+        { order: 3, title: 'Microsoft 365 (Office.com accounts)', body: 'Sign in to the admin center at `admin.microsoft.com` with your admin account. Go to **Users > Active users** and select the person. Click **Reset password**, choose to create a password automatically or type one, and keep **Require this user to change their password when they first sign in** ticked. Click **Reset password** and copy the temporary password.' },
+        { order: 4, title: 'Google Workspace (formerly G Suite / GSuite)', body: 'Sign in to the Admin console at `admin.google.com` with your admin account. Go to **Directory > Users** and click the person\'s name. Click **Reset password**, choose to generate a password automatically or create one, and turn on **Ask for a password change at the next sign-in**. Click **Reset** and copy the temporary password.' },
+        { order: 5, title: 'Give the temporary password safely', body: 'Share the temporary password in person, by phone or through another secure channel. Do not send it to the mailbox you just reset, and never reuse it for another account.' },
+        { order: 6, title: 'Check the user can sign in', body: 'Ask the user to sign in and choose a new password when prompted. If they are still locked out, wait a few minutes for the change to apply, then check in the console that their account is not blocked or suspended. Menu names can differ slightly between console versions.' },
+        { order: 7, title: 'Point them to self-service next time', body: 'If your organisation allows it, users can reset their own password: Microsoft 365 users can go to `passwordreset.microsoftonline.com`, and Google users can use the **Forgot password?** link on the sign-in page. This saves you a ticket.' },
+      ],
+    },
+    {
       title: 'Outlook Not Syncing',
       slug: 'outlook-not-syncing',
       summary: 'Fix Outlook synchronization issues and get your emails syncing properly.',
