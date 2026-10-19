@@ -158,3 +158,23 @@ MIT
   them to Claude as reference material, and streams the answer back. Set `ANTHROPIC_API_KEY` (and optionally
   `ANTHROPIC_MODEL`) in `.env`, then restart. Without a key the chat shows a "not set up yet" message. Each visitor is
   limited to 8 messages a minute and 60 an hour (in memory, per server instance).
+
+## Deploying to Vercel
+
+The app uses PostgreSQL, because Vercel cannot run a SQLite file (its filesystem is read-only and temporary).
+
+1. Create a Postgres database (Neon, Supabase or Vercel Storage > Postgres) and copy its connection string.
+2. In Vercel > Project > Settings > Environment Variables add:
+   - `DATABASE_URL` (the connection string)
+   - `NEXTAUTH_SECRET` (generate one with `openssl rand -base64 32`)
+   - `NEXTAUTH_URL` (your site address, e.g. `https://your-app.vercel.app`)
+   - `ANTHROPIC_API_KEY` (optional, enables the AI assistant)
+3. Create the tables and sample data once, from your computer, with the same `DATABASE_URL` in your local `.env`:
+   ```
+   npx prisma db push
+   npm run seed
+   ```
+   If `db push` fails on a pooled connection, use the database's direct (non-pooled) connection string for this step.
+4. Push to GitHub. Vercel rebuilds automatically (`postinstall` and `build` run `prisma generate`).
+
+If a page shows "This page couldn't load", open Vercel > Deployments > Logs for the exact error.

@@ -4,8 +4,6 @@ import * as React from 'react'
 
 export type Theme = 'light' | 'dark' | 'system'
 
-const STORAGE_KEY = 'theme'
-
 type ThemeContextValue = {
   theme: Theme
   resolvedTheme: 'light' | 'dark'
@@ -14,65 +12,39 @@ type ThemeContextValue = {
 
 const ThemeContext = React.createContext<ThemeContextValue | null>(null)
 
-/**
- * Runs before first paint to avoid a flash of the wrong theme. It is rendered
- * as plain HTML from the root layout (a server component), which is why React 19
- * does not warn about it the way it did for next-themes' client-rendered script.
- */
-export const themeInitScript = `(function(){try{var t=localStorage.getItem('${STORAGE_KEY}');var d=t==='dark'||((!t||t==='system')&&window.matchMedia('(prefers-color-scheme: dark)').matches);var r=document.documentElement;r.classList.toggle('dark',d);r.style.colorScheme=d?'dark':'light'}catch(e){}})()`
+const MEDIA = '(prefers-color-scheme: dark)'
 
-function systemPrefersDark() {
-  return window.matchMedia('(prefers-color-scheme: dark)').matches
+function subscribeToSystem(onChange: () => void) {
+  const media = window.matchMedia(MEDIA)
+  media.addEventListener('change', onChange)
+  return () => media.removeEventListener('change', onChange)
 }
 
-function readStoredTheme(): Theme {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    if (stored === 'light' || stored === 'dark' || stored === 'system') return stored
-  } catch {
-    // Storage can be unavailable (private mode); fall back to system.
-  }
-  return 'system'
-}
+export function ThemeProvider({
+  children,
+  initialTheme,
+}: {
+  children: React.ReactNode
+  initialTheme: Theme
+}) {
+  const [theme, setThemeState] = React.useState<Theme>(initialTheme)
 
-function applyTheme(theme: Theme) {
-  const dark = theme === 'dark' || (theme === 'system' && systemPrefersDark())
-  const root = document.documentElement
-  root.classList.toggle('dark', dark)
-  root.style.colorScheme = dark ? 'dark' : 'light'
-  return dark ? 'dark' : 'light'
-}
-
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = React.useState<Theme>('system')
-  const [resolvedTheme, setResolvedTheme] = React.useState<'light' | 'dark'>('light')
-
-  // Sync with whatever the init script / previous visit decided.
-  React.useEffect(() => {
-    const stored = readStoredTheme()
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setThemeState(stored)
-    setResolvedTheme(applyTheme(stored))
-  }, [])
-
-  // Follow OS changes while on "system".
-  React.useEffect(() => {
-    if (theme !== 'system') return
-    const media = window.matchMedia('(prefers-color-scheme: dark)')
-    const onChange = () => setResolvedTheme(applyTheme('system'))
-    media.addEventListener('change', onChange)
-    return () => media.removeEventListener('change', onChange)
-  }, [theme])
+  const systemDark = React.useSyncExternalStore(
+    subscribeToSystem,
+    () => window.matchMedia(MEDIA).matches,
+    () => false
+  )
 
   const setTheme = React.useCallback((next: Theme) => {
     setThemeState(next)
-    setResolvedTheme(applyTheme(next))
-    try {
-      localStorage.setItem(STORAGE_KEY, next)
-    } catch {
-      // ignore
-    }
+    const root = document.documentElement
+    root.classList.remove('light', 'dark')
+    if (next !== 'system') root.classList.add(next)
+    document.cookie = `theme=${next}; path=/; max-age=31536000; SameSite=Lax`
   }, [])
+
+  const resolvedTheme: 'light' | 'dark' =
+    theme === 'system' ? (systemDark ? 'dark' : 'light') : theme
 
   const value = React.useMemo(
     () => ({ theme, resolvedTheme, setTheme }),

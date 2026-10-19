@@ -5,6 +5,7 @@
 /* Neutral slate palette with a single indigo accent. */
 @layer base {
   :root {
+    color-scheme: light dark;
     --background: 220 25% 98%;
     --foreground: 224 30% 11%;
     --card: 0 0% 100%;
@@ -32,7 +33,12 @@
     --radius: 0.75rem;
   }
 
+  .light {
+    color-scheme: light;
+  }
+
   .dark {
+    color-scheme: dark;
     --background: 224 26% 7%;
     --foreground: 220 20% 94%;
     --card: 224 24% 10%;
@@ -57,6 +63,35 @@
     --input: 224 16% 22%;
     --ring: 239 84% 70%;
     --shadow: 224 60% 2%;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not(.light) {
+      --background: 224 26% 7%;
+      --foreground: 220 20% 94%;
+      --card: 224 24% 10%;
+      --card-foreground: 220 20% 94%;
+      --popover: 224 24% 10%;
+      --popover-foreground: 220 20% 94%;
+      --primary: 239 84% 70%;
+      --primary-foreground: 224 40% 10%;
+      --secondary: 224 18% 16%;
+      --secondary-foreground: 220 20% 90%;
+      --muted: 224 18% 16%;
+      --muted-foreground: 220 12% 64%;
+      --accent: 243 40% 20%;
+      --accent-foreground: 239 90% 84%;
+      --destructive: 0 72% 60%;
+      --destructive-foreground: 224 40% 10%;
+      --success: 152 50% 55%;
+      --success-foreground: 224 40% 10%;
+      --warning: 38 90% 60%;
+      --warning-foreground: 224 40% 10%;
+      --border: 224 16% 18%;
+      --input: 224 16% 22%;
+      --ring: 239 84% 70%;
+      --shadow: 224 60% 2%;
+    }
   }
 }
 
